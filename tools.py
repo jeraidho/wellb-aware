@@ -2,15 +2,16 @@ import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from pymorphy2 import MorphAnalyzer
-import pickle
 import pandas as pd
 from pandarallel import pandarallel
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import os
+import joblib
 
 morph = MorphAnalyzer()
 nltk.download('punkt')
 sw = stopwords.words('russian')
+sw.remove('не')
 
 
 def preprocess(doc: str, normal_form=True) -> str:
@@ -36,8 +37,7 @@ def vectorise(data):
     :param data: Doc that is to be vectorised by TF-IDF
     :return:
     """
-    with open('./data/vectoriser.pkl') as model:
-        vectoriser = pickle.load(model)  # load tf-idf vectoriser
+    vectoriser = joblib.load('./data/vectoriser.pkl')  # load tf-idf vectoriser
     return vectoriser.transform(data)
 
 
