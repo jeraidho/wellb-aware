@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from tools import evaluation, csv_gen, preprocess, vectorise
+from tools import evaluation, csv_gen
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 import os
@@ -34,5 +34,3 @@ clf.fit(X_train_transformed, y_train)
 evaluation(y_train, X_train_transformed, y_test, X_test_transformed, clf)
 
 joblib.dump(clf, './data/classifier.pkl')
-
-# print(clf.predict(vectorise([preprocess('я хочу убить себя')])))

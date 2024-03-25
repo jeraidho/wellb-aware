@@ -7,6 +7,7 @@ from pandarallel import pandarallel
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import os
 import joblib
+import json
 
 morph = MorphAnalyzer()
 nltk.download('punkt')
@@ -79,3 +80,21 @@ def evaluation(y_train, X_train, y_test, X_test, model):
     Recall: {round(recall_score(y_test, model.predict(X_test)), 3)}
     F1 score: {round(f1_score(y_test, model.predict(X_test)), 3)}
     """)
+
+
+def clean_db():
+    """
+    Function cleans dataset.json
+    :return:
+    """
+    with open('./data/dataset.json', 'w') as f:
+        json.dump({}, f)
+
+
+def clean_mutedb():
+    """
+    Function cleans muted.json
+    :return:
+    """
+    with open('./data/muted.json', 'w') as f:
+        json.dump({'ids': []}, f)
