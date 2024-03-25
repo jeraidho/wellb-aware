@@ -90,6 +90,8 @@ async def check_suicidal_message(message: types.Message):
                     f'<blockquote>{message.text}</blockquote>\n\n' \
                     f'Сообщение действительно содержит <b>суицидальные мысли</b> или <b>упоминание насилия</b>?'
 
+                if 'muted.json' not in os.listdir('./data/'):
+                    clean_mutedb()
                 with open('./data/muted.json', 'r') as f:
                     db = json.load(f)
                     muted = db['ids']
@@ -143,7 +145,7 @@ async def process_callback(callback_query: types.CallbackQuery):
     # collecting message
     message = preprocess(callback_query.message.text.split('\n')[3])
     print(message, code)
-
+    await callback_query.message.delete()
     # add sentences in database for training model
     if 'dataset.json' not in os.listdir('./data/'):
         clean_db()
