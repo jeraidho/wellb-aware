@@ -22,6 +22,11 @@ inline_no = InlineKeyboardButton('Нет', callback_data='button_no')
 inline_kb = InlineKeyboardMarkup().add(inline_yes)
 inline_kb.add(inline_no)
 
+inline_contains = InlineKeyboardButton('Содержит', callback_data='inline_yes')
+inline_ncontains = InlineKeyboardButton('Не содержит', callback_data='inline_no')
+inline_kb1 = InlineKeyboardMarkup().add(inline_contains)
+inline_kb1.add(inline_ncontains)
+
 # keyboard buttons
 button_info = KeyboardButton('Информация📜')
 button_testing = KeyboardButton('Тестирование бота')
@@ -38,15 +43,16 @@ testing_mode_users = {}
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    response = (
-        '<b>Привет!</b>✨\n\nЭтот бот предназначен для <i>отслеживания ментальной стабильности участников группы</i>\n\n'
-        'Добавив бота в группу, <b><i>он будет высылать сообщение с предупреждением всем администраторам группы</i></b>'
-        '\n\nЕсли вы хотите отключить предупреждения от бота, воспользуйтесь кнопкой <i>Отключить/включить '
-        'уведомления</i>🚫\n\nЕсли вам хочется протестировать алгоритм классификации, то нажмите кнопку '
-        '<i>Тестирование бота</i>\n\n'
-        '<i>При использовании в группах бот сохраняет ваши ответы на вопрос после предупреждения '
-        'и текст сообщения в анонимизированном виде</i>')
-    await bot.send_message(message.from_user.id, response, parse_mode='HTML', reply_markup=greet_kb)
+    if message.chat.type not in ['group', 'supergroup']:
+        response = (
+            '<b>Привет!</b>✨\n\nЭтот бот предназначен для <i>отслеживания ментальной стабильности участников группы</i>\n\n'
+            'Добавив бота в группу, <b><i>он будет высылать сообщение с предупреждением всем администраторам группы</i></b>'
+            '\n\nЕсли вы хотите отключить предупреждения от бота, воспользуйтесь кнопкой <i>Отключить/включить '
+            'уведомления</i>🚫\n\nЕсли вам хочется протестировать алгоритм классификации, то нажмите кнопку '
+            '<i>Тестирование бота</i>\n\n'
+            '<i>При использовании в группах бот сохраняет ваши ответы на вопрос после предупреждения '
+            'и текст сообщения в анонимизированном виде</i>')
+        await bot.send_message(message.from_user.id, response, parse_mode='HTML', reply_markup=greet_kb)
 
 
 # message handler
@@ -56,7 +62,8 @@ async def check_suicidal_message(message: types.Message):
 
     user_id = message.from_user.id
     # check if user in testing_mode
-    if user_id in testing_mode_users and testing_mode_users[user_id]:
+    if user_id in testing_mode_users and testing_mode_users[user_id] and message.chat.type not in \
+                                                                                        ['group', 'supergroup']:
         if message.text == 'Стоп❌':
             # turning mode off
             testing_mode_users[user_id] = False
@@ -66,11 +73,13 @@ async def check_suicidal_message(message: types.Message):
             prediction = model.predict(vectorise([preprocess(message.text)]))
 
             if prediction[0]:
-                await message.reply('Строка содержит суицидальные мысли или упоминание насилия',
-                                    reply_markup=testing_kb)
+                await bot.send_message(message.from_user.id, f'<blockquote>{message.text}</blockquote>\nСтрока'
+                                    f' содержит суицидальные мысли или упоминание насилия',
+                                    reply_markup=inline_kb1, parse_mode='HTML')
             else:
-                await message.reply('Строка не содержит суицидальные мысли или упоминание насилия',
-                                    reply_markup=testing_kb)
+                await bot.send_message(message.from_user.id, f'<blockquote>{message.text}</blockquote>\nСтрока'
+                                    f' не содержит суицидальные мысли или упоминание насилия',
+                                    reply_markup=inline_kb1, parse_mode='HTML')
 
     else:
         # check if chat is public
@@ -134,7 +143,7 @@ async def check_suicidal_message(message: types.Message):
                 await message.reply(response, reply_markup=testing_kb)
 
 
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith('button'))
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('button') or c.data.startswith('inline'))
 async def process_callback(callback_query: types.CallbackQuery):
     global path
     code = callback_query.data.split('_')[1]
@@ -143,9 +152,12 @@ async def process_callback(callback_query: types.CallbackQuery):
     sleep(0.2)
 
     # collecting message
-    message = preprocess(callback_query.message.text.split('\n')[3])
-    print(message, code)
-    await callback_query.message.delete()
+    message = preprocess(callback_query.message.text.split('\n')[3]) \
+            if callback_query.data.startswith('button') else preprocess(callback_query.message.text.split('\n')[0])
+    if callback_query.data.startswith('button'):
+        await callback_query.message.delete()
+    else:
+        await callback_query.message.delete_reply_markup()
     # add sentences in database for training model
     if 'dataset.json' not in os.listdir('./data/'):
         clean_db()
