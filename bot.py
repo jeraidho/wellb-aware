@@ -152,8 +152,8 @@ async def process_callback(callback_query: types.CallbackQuery):
     sleep(0.2)
 
     # collecting message
-    message = preprocess(callback_query.message.text.split('\n')[3]) \
-            if callback_query.data.startswith('button') else preprocess(callback_query.message.text.split('\n')[0])
+    message = callback_query.message.text.split('\n')[3] \
+            if callback_query.data.startswith('button') else callback_query.message.text.split('\n')[0]
     if callback_query.data.startswith('button'):
         await callback_query.message.delete()
     else:
