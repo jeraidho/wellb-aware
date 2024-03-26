@@ -11,13 +11,13 @@ import os
 import logging
 
 # webhook settings
-WEBHOOK_HOST = 'http://wellb.bmyaku04.beget.tech/'
+WEBHOOK_HOST = 'https://wellb.bmyaku04.beget.tech'
 WEBHOOK_PATH = '/root/bots/wellb-aware/'
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
 # webserver settings
-WEBAPP_HOST = '::'  # or ip
-WEBAPP_PORT = 8350
+WEBAPP_HOST = '5.35.95.145'  # or ip
+WEBAPP_PORT = 8001
 
 # Load your sklearn model
 model = joblib.load("./data/classifier.pkl")
@@ -172,6 +172,7 @@ async def process_callback(callback_query: types.CallbackQuery):
 
 
 async def on_startup(dp):
+    print("Webhook is sent!")
     await bot.set_webhook(WEBHOOK_URL)
     # insert code here to run it after start
 
